@@ -10,18 +10,28 @@
 2. [Terrain Warning — Read Before Getting Started](#2--terrain-warning--read-before-getting-started)
 3. [Installation & Setup](#3-installation--setup)
 4. [Quick Start — Generating a Flat City](#4-quick-start--generating-a-flat-city)
-5. [CityGenActor Reference](#5-citygenactor-reference)
-6. [Building Types](#6-building-types)
-   - [6.1 Residential Buildings](#61-residential-buildings)
-   - [6.2 Commercial Buildings](#62-commercial-buildings)
-   - [6.3 Apartment Buildings](#63-apartment-buildings)
-   - [6.4 Small Buildings (Retail / Kiosks)](#64-small-buildings-retail--kiosks)
-   - [6.5 Slum Buildings](#65-slum-buildings)
-   - [6.6 Parking Structures](#66-parking-structures)
-7. [Street Generation (Standalone)](#7-street-generation-standalone)
-8. [Material System](#8-material-system)
-9. [Randomization & Seeds](#9-randomization--seeds)
-10. [Tips & Known Limitations](#10-tips--known-limitations)
+5. [Generating Individual Assets via the Tools Menu](#5-generating-individual-assets-via-the-tools-menu)
+   - [5.1 Opening the Tools Menu](#51-opening-the-tools-menu)
+   - [5.2 Dialog Layout (All Building Types)](#52-dialog-layout-all-building-types)
+   - [5.3 Residential Building Dialog](#53-residential-building-dialog)
+   - [5.4 Commercial Building Dialog](#54-commercial-building-dialog)
+   - [5.5 Apartment Building Dialog](#55-apartment-building-dialog)
+   - [5.6 Small Infill Building Dialog](#56-small-infill-building-dialog)
+   - [5.7 Slum Dwelling Dialog](#57-slum-dwelling-dialog)
+   - [5.8 Parking Lot Dialog](#58-parking-lot-dialog)
+   - [5.9 Street Network Dialog](#59-street-network-dialog)
+6. [CityGenActor Reference](#6-citygenactor-reference)
+7. [Building Types](#7-building-types)
+   - [7.1 Residential Buildings](#71-residential-buildings)
+   - [7.2 Commercial Buildings](#72-commercial-buildings)
+   - [7.3 Apartment Buildings](#73-apartment-buildings)
+   - [7.4 Small Buildings (Retail / Kiosks)](#74-small-buildings-retail--kiosks)
+   - [7.5 Slum Buildings](#75-slum-buildings)
+   - [7.6 Parking Structures](#76-parking-structures)
+8. [Street Generation (Standalone)](#8-street-generation-standalone)
+9. [Material System](#9-material-system)
+10. [Randomization & Seeds](#10-randomization--seeds)
+11. [Tips & Known Limitations](#11-tips--known-limitations)
 
 ---
 
@@ -166,7 +176,214 @@ You can also set up material pools in the individual building generator dialogs 
 
 ---
 
-## 5. CityGenActor Reference
+## 5. Generating Individual Assets via the Tools Menu
+
+The plugin adds a **Procedural Buildings** section to the Unreal Editor's **Tools** menu. Every entry opens a self-contained modal dialog that generates a single asset — no actors need to be placed in the level, and no city configuration is required. This is the fastest way to create a single building or street mesh and place it wherever you like.
+
+### 5.1 Opening the Tools Menu
+
+In the Unreal Editor menu bar, click **Tools → Procedural Buildings**. You will see the following entries:
+
+| Menu Entry | Opens |
+|------------|-------|
+| **Generate Residential Building...** | Residential building dialog |
+| **Generate Slum Dwelling...** | Slum dwelling dialog |
+| **Generate Street Network...** | Street network dialog |
+| **Generate Commercial Building...** | Commercial building dialog |
+| **Generate Apartment Building...** | Apartment building dialog |
+| **Generate Small Infill Building...** | Small infill building dialog |
+| **Generate Parking Lot...** | Parking lot dialog |
+
+Each entry opens a **resizable modal window** (980 × 760 px default, 600 × 400 for the street dialog). The editor is blocked until you click **Generate** or **Cancel**.
+
+---
+
+### 5.2 Dialog Layout (All Building Types)
+
+All building dialogs share the same overall structure:
+
+```
+┌─────────────────────────────────────────────────┐
+│  Floor Count        [ spin box ]                 │
+│  Random Seed        [ checkbox ]                 │
+│  Seed               [ spin box ]  (hidden when   │
+│                                    random = on)  │
+│  Asset Name         [ text box ]                 │
+│  Asset Path         [ text box ]                 │
+│                                                  │
+│  ── Material Slots ──────────────────────────── │
+│  Slot 0 – Wall                                   │
+│    [Material picker]  [+ Add]  [− Remove]        │
+│  Slot 1 – Roof                                   │
+│    [Material picker]  [+ Add]  [− Remove]        │
+│  ... (one row per slot for this building type)   │
+│                                                  │
+│              [ Generate ]  [ Cancel ]            │
+└─────────────────────────────────────────────────┘
+```
+
+#### Common Controls
+
+| Control | Description |
+|---------|-------------|
+| **Floor Count** | Number of floors to generate. Range and meaning vary by building type. |
+| **Random Seed** checkbox | When ticked, a new random seed is used each time. When unticked, the **Seed** spin box becomes visible and active. |
+| **Seed** | Integer seed for reproducible generation. Only shown when **Random Seed** is unchecked. |
+| **Asset Name** | File name for the saved `UStaticMesh` asset (no extension needed). |
+| **Asset Path** | Content Browser path to save the asset under (e.g. `/Game/Buildings/MyBuilding`). The directory is created automatically. |
+| **Material slot rows** | One expandable row per material slot. Each row can hold multiple materials — click **+ Add** to append a picker, **− Remove** to delete one. The generator randomly picks one material from the pool per slot at generation time. |
+| **Generate** | Runs generation, saves the static mesh to the specified path, and closes the dialog. |
+| **Cancel** | Closes the dialog without generating anything. |
+
+> **Material pools are persisted.** The materials you assign in each slot are remembered between editor sessions. The next time you open the same dialog, your previous selections are pre-filled.
+
+---
+
+### 5.3 Residential Building Dialog
+
+**Menu entry:** Tools → Procedural Buildings → **Generate Residential Building...**
+
+Generates a single residential home or townhouse and saves it as a `UStaticMesh`.
+
+| Control | Notes |
+|---------|-------|
+| **Floor Count** | Number of storeys (1 = single storey, 2+ = multi-storey). |
+| **Material slots** | 17 slots — see [Section 7.1](#71-residential-buildings) for the full slot list. |
+
+The building style (archetype, roof type, door type, etc.) is driven by the seed. Each seed produces a different combination of configuration options drawn from the full set of residential enums. To get a specific style, you can adjust the seed until the desired combination appears, then lock it in by unchecking **Random Seed**.
+
+---
+
+### 5.4 Commercial Building Dialog
+
+**Menu entry:** Tools → Procedural Buildings → **Generate Commercial Building...**
+
+Generates a single commercial/office tower.
+
+| Control | Notes |
+|---------|-------|
+| **Floor Count** | Number of office floors above the ground floor. Higher counts produce taller towers. |
+| **Material slots** | 12 slots — see [Section 7.2](#72-commercial-buildings) for the full slot list. |
+
+Shape, facade style, entrance type, modifiers, and window style are all selected procedurally from the seed. Vary the seed to explore the full range of commercial building forms.
+
+---
+
+### 5.5 Apartment Building Dialog
+
+**Menu entry:** Tools → Procedural Buildings → **Generate Apartment Building...**
+
+Generates a mid-rise apartment block with a podium base.
+
+| Control | Notes |
+|---------|-------|
+| **Floor Count** | Total floors including the podium. The podium occupies the lower floor(s); upper floors form the tower. |
+| **Material slots** | 12 slots (COMM palette) — see [Section 7.3](#73-apartment-buildings). |
+
+Massing style, balcony configuration, shopfront type, and optional rooftop details are all seed-driven.
+
+---
+
+### 5.6 Small Infill Building Dialog
+
+**Menu entry:** Tools → Procedural Buildings → **Generate Small Infill Building...**
+
+Generates a 1–2 storey retail or kiosk building, suitable for filling tight urban gaps or corner lots.
+
+| Control | Notes |
+|---------|-------|
+| **Floor Count** | `1` for a single-storey kiosk; `2` adds an upper residential or storage floor. |
+| **Material slots** | 8 slots — see [Section 7.4](#74-small-buildings-retail--kiosks). |
+
+Footprint type, facade theme, walkway style, and optional features (canopy, billboard, pilasters, shutters) are seed-driven.
+
+---
+
+### 5.7 Slum Dwelling Dialog
+
+**Menu entry:** Tools → Procedural Buildings → **Generate Slum Dwelling...**
+
+Generates an informal settlement compound with varied room materials, tilted roofs, and optional perimeter fencing.
+
+| Control | Notes |
+|---------|-------|
+| **Floor Count** | Number of floors in the tallest structure in the compound. Multi-floor slum buildings use exterior stairs. |
+| **Material slots** | 10 slots — see [Section 7.5](#75-slum-buildings). |
+
+Wall material per room (metal, wood, cinder, plywood, painted, mud), roof tilt angles, and compound layout are all randomised from the seed.
+
+---
+
+### 5.8 Parking Lot Dialog
+
+**Menu entry:** Tools → Procedural Buildings → **Generate Parking Lot...**
+
+The parking dialog has additional controls not present in the building dialogs:
+
+```
+┌─────────────────────────────────────────────────┐
+│  Lot Type     [ Enclosed ▼ ]                     │
+│  Shape        [ Rectangle ▼ ]                    │
+│  Ramp Loc     [ Center ▼ ]                       │
+│  Blocks       [ spin box ]                       │
+│  Columns      [ spin box ]                       │
+│  Floors       [ spin box ]  (hidden for OpenAir) │
+│  Random Seed  [ checkbox ]                       │
+│  Seed         [ spin box ]                       │
+│  Asset Name   [ text box ]                       │
+│  Asset Path   [ text box ]                       │
+│                                                  │
+│  ── Material Slots ──────────────────────────── │
+│  ... (7 slots)                                   │
+│                                                  │
+│              [ Generate ]  [ Cancel ]            │
+└─────────────────────────────────────────────────┘
+```
+
+| Control | Options | Notes |
+|---------|---------|-------|
+| **Lot Type** | `Enclosed`, `OpenAir` | `OpenAir` hides the **Floors** spinner (surface lot only). |
+| **Shape** | `Rectangle`, `LShape`, `UShape` | Controls the overall footprint of the parking structure. |
+| **Ramp Loc** | `Center`, `Corner`, `External` | Placement of the vehicle ramp between floors. |
+| **Blocks** | Integer ≥ 1 | Number of parking unit blocks (rows of bays side by side). |
+| **Columns** | Integer ≥ 1 | Number of parking columns (spaces) per row. |
+| **Floors** | Integer ≥ 1 | Number of levels. Hidden when **Lot Type** is `OpenAir`. |
+| **Material slots** | 7 slots | See [Section 7.6](#76-parking-structures). |
+
+---
+
+### 5.9 Street Network Dialog
+
+**Menu entry:** Tools → Procedural Buildings → **Generate Street Network...**
+
+The street dialog is intentionally minimal — it generates a street mesh using default parameters (suitable for a flat city) with just a grid size and seed as inputs.
+
+```
+┌───────────────────────────────────────┐
+│  Grid Size    [ spin box ]            │
+│  Random Seed  [ checkbox ]            │
+│  Seed         [ spin box ]            │
+│  Asset Name   [ text box ]            │
+│  Asset Path   [ text box ]            │
+│                                       │
+│          [ Generate ]  [ Cancel ]     │
+└───────────────────────────────────────┘
+```
+
+| Control | Notes |
+|---------|-------|
+| **Grid Size** | Number of city blocks per axis. Larger values produce a wider street grid. Equivalent to `GridSize` on `ACityGenActor`. |
+| **Random Seed** / **Seed** | Same seed semantics as all other dialogs. |
+| **Asset Name** | Default: `SM_UrbanStreetNetwork`. |
+| **Asset Path** | Default: `/Game/Procedural/City`. |
+
+For advanced street configuration (road widths, intersection jitter, street furniture, etc.) use `AStreetGeneratorActor` placed in the level instead — see [Section 8](#8-street-generation-standalone).
+
+> **Note:** Terrain options are not exposed in this dialog. The street is always generated flat, which is the correct behaviour until terrain support is finalised.
+
+---
+
+## 6. CityGenActor Reference
 
 `ACityGenActor` is the master city generator. Place one in your level and call **Generate City** from the Details panel.
 
@@ -257,300 +474,65 @@ You can also set up material pools in the individual building generator dialogs 
 
 ---
 
-## 6. Building Types
+## 7. Building Types
 
-Each building type can be used standalone through its own editor dialog, or it will be spawned automatically by `ACityGenActor` during city generation.
+Each building type can be used standalone through the Tools menu dialogs (see [Section 5](#5-generating-individual-assets-via-the-tools-menu)), or placed automatically by `ACityGenActor` during full city generation.
 
----
-
-### 6.1 Residential Buildings
-
-Single-family and multi-family homes with garages, terraces, fences, and a variety of roof shapes and architectural styles.
-
-**Grid:** 400 units/cell | **Wall Height:** 320 units | **Floor Thickness:** 40 units | **Front Margin:** 600 units
-
-#### Configuration (`FResidentialBuildingConfig`)
-
-| Property | Type | Default | Options / Notes |
-|----------|------|---------|-----------------|
-| `Archetype` | `EResidentialArchetype` | `Auto` | `Auto`, `TownhouseRow`, `CourtyardVilla`, `BungalowCompound`, `DuplexStack`, `SplitLevelHillside`, `AtriumMansion` |
-| `ArchStyle` | `EArchitecturalStyle` | `Modern` | `Modern`, `Homestead`, `Mediterranean`, `Craftsman` |
-| `RoofType` | `EResidentialRoofType` | `Flat` | `Hipped`, `Gable`, `Skillion`, `Flat`, `Gambrel`, `DutchGable`, `ModernGable` |
-| `DoorType` | `EResidentialDoorType` | `Double` | `Pivot`, `Double`, `Glass`, `French`, `Contemporary`, `Arch`, `Panel`, `Sliding` |
-| `FenceType` | `EResidentialFenceType` | `Wood` | `Wood`, `Concrete` |
-| `PaletteFamily` | `EResidentialPaletteFamily` | `Auto` | `Auto`, `UrbanCharcoal`, `CoastalBright`, `WarmTerracotta`, `GardenTimber`, `BrickPaint`, `ConcreteSand` |
-| `bIsLeftGarage` | `bool` | `false` | Garage position — `false` = right side, `true` = left side |
-| `GarageWidth` | `int32` | `3` | Garage width in grid cells |
-| `GarageDepth` | `int32` | `4` | Garage depth in grid cells |
-| `LivingWidth` | `int32` | `5` | Living area width in grid cells |
-| `LivingDepth` | `int32` | `4` | Living area depth in grid cells |
-| `RoofOverhang` | `float` | `100` | Eave overhang distance (Unreal units) |
-| `RoofPitch` | `float` | `0.4` | Roof slope multiplier |
-| `bHasBandCourse` | `bool` | `false` | Adds a horizontal band course detail to the facade |
-| `bHasEntryPortal` | `bool` | `false` | Adds a decorative entry portal |
-| `WindowStyle` | `int32` | `0` | Index-based window style selection |
-| `WindowRhythm` | `int32` | `0` | Spacing/rhythm pattern for window placement |
-| `MassingStyle` | `int32` | `0` | Massing/volume style index |
-| `UpperSetback` | `int32` | `1` | Upper floor horizontal setback in cells |
-| `UpperShift` | `int32` | `0` | Upper floor lateral shift in cells |
-| `GenerationSeed` | `int32` | `0` | Per-building seed for reproducible generation |
-
-#### Material Slots (17)
-
-| Slot | Name | Used For |
-|------|------|----------|
-| 0 | `Wall` | Main facade masonry |
-| 1 | `Roof` | Roof planes and fascias |
-| 2 | `Glass` | All glazing |
-| 3 | `Ground` | Ground floor slabs |
-| 4 | `Wood` | Timber fences and details |
-| 5 | `Door` | Front entry door |
-| 6 | `GarageDoor` | Garage panel door |
-| 7 | `Metal` | Frames, railings, and trims |
-| 8 | `Stone` | Stone cladding and band courses |
-| 9 | `Concrete` | Pillars and structural slabs |
-| 10 | `Pavement` | Entry walkways |
-| 11 | `Driveway` | Driveway aprons |
-| 12 | `Weatherboard` | Horizontal siding (Homestead/Craftsman) |
-| 13 | `Stucco` | Render finish (Mediterranean) |
-| 14 | `Brick` | Masonry accents |
-| 15 | `ClayTile` | Clay roof tiles (Mediterranean) |
-| 16 | `WroughtIron` | Wrought iron railings (Mediterranean) |
+All building styles, shapes, and detail variations are driven by the generation seed. Varying the seed explores the full range of output for each type.
 
 ---
 
-### 6.2 Commercial Buildings
+### 7.1 Residential Buildings
 
-Office towers, retail complexes, and institutional buildings with complex multi-floor facades, lobby entrances, roof features, and optional front fencing.
+Single-family and multi-family homes. Outputs include garages, terraces, front fencing, varied rooflines, and architectural styles ranging from modern to craftsman and Mediterranean.
 
-**Grid:** 400 units/cell | **Wall Height:** 480 units | **Floor Thickness:** 60 units | **Front Margin:** 1600 units
-
-#### Configuration (`FCommercialBuildingConfig`)
-
-| Property | Type | Default | Options / Notes |
-|----------|------|---------|-----------------|
-| `SizeCategory` | `ECommercialSizeCategory` | `Medium` | `Tiny`, `Small`, `Medium`, `Large` |
-| `Shape` | `ECommercialShape` | `Box` | `Box`, `LShape`, `UShape`, `Stepped`, `Twin`, `Cross`, `Courtyard`, `OShape`, `TShape`, `ArcadeBox`, `Overhang`, `Asymmetric`, `KICCStyle`, `PodiumTower`, `ShiftedBlocks`, `PyramidBase`, `DualTowerPodium` |
-| `FacadeStyle` | `ECommercialFacadeStyle` | `CurtainWall` | `CurtainWall`, `MetalPanel`, `BrickIndustrial`, `EcoTimber`, `LuxuryMarble`, `NeoFuturism`, `Brutalism`, `Cyberpunk`, `NairobiModern`, `SavannahRetail` |
-| `Modifier` | `ECommercialModifier` | `None` | `None`, `Twist`, `Taper`, `Wave`, `Slant` |
-| `ModifierAmount` | `float` | `0.0` | Intensity of the modifier (0 = off, higher = stronger effect) |
-| `WindowStyle` | `ECommercialWindowStyle` | `Standard` | `Standard`, `HorizontalBands`, `VerticalFins`, `GridMatrix`, `Punched`, `NarrowSlits`, `ClassicDivided` |
-| `GFWindowStyle` | `ECommercialGFWindowStyle` | `FullGlass` | `FullGlass`, `ClassicDivided`, `PunchedStorefront`, `FramedBay` — Ground floor window treatment |
-| `EntranceStyle` | `ECommercialEntranceStyle` | `GrandCanopy` | `MinimalGlass`, `RecessedEntry`, `AngledAwning`, `ClassicDoubleDoors`, `ModernArch`, `GrandCanopy`, `RevolvingDoor`, `GlassAtriumEntry`, `MallPlazaEntry`, `FuturisticPortal`, `NeoClassicalColumns`, `IndustrialContainer` |
-| `DoorStyle` | `ECommercialDoorStyle` | `DoubleGlass` | `DoubleGlass`, `SolidWood`, `IndustrialMetal`, `SlidingGlass` |
-| `RoofStyle` | `ECommercialRoofStyle` | `Utility` | `Utility`, `Cluttered`, `SolarFarm` |
-| `GateStyle` | `ECommercialGateStyle` | `ClassicIron` | `ClassicIron`, `ModernSlider`, `SolidSecurity`, `WoodenEstate` |
-| `bHasCantilever` | `bool` | `false` | Adds a structural cantilever detail |
-| `bHasFrontFence` | `bool` | `true` | Enables a front perimeter fence |
-| `FrontCurveRadius` | `float` | `0.0` | Curve radius for front fence. `0` = straight. |
-| `MarginFront` | `float` | `1600` | Front setback from road in Unreal units |
-| `MarginBack` | `float` | `800` | Rear setback |
-| `MarginSides` | `float` | `800` | Side setbacks |
-| `WCore` | `int32` | `4` | Core width in grid cells |
-| `WWing` | `int32` | `6` | Wing width in grid cells |
-| `DCoreD` | `int32` | `4` | Core depth in grid cells |
-| `DWingFront` | `int32` | `3` | Front wing depth |
-| `DWingBack` | `int32` | `3` | Rear wing depth |
-| `GenerationSeed` | `int32` | `0` | Per-building generation seed |
-
-#### Material Slots (12)
-
-| Slot | Name | Used For |
-|------|------|----------|
-| 0 | `Glass` | Curtain wall glazing |
-| 1 | `Frame` | Mullions, spandrel trims |
-| 2 | `Panel` | Main facade cladding |
-| 3 | `Spandrel` | Floor band panels |
-| 4 | `Concrete` | Structural core and columns |
-| 5 | `Granite` | Lobby base and ground sills |
-| 6 | `FloorSlab` | Exposed slab edges |
-| 7 | `Metal` | HVAC, railings, bollards |
-| 8 | `Terrace` | Terrace and roof panels |
-| 9 | `Road` | Asphalt areas |
-| 10 | `Sidewalk` | Plaza and pedestrian paving |
-| 11 | `Wood` | Timber cladding details |
+**Material slots:** 17 — covering walls, roof, glass, ground, wood, doors, garage doors, metal trim, stone, concrete, pavement, driveway, weatherboard, stucco, brick, clay tile, and wrought iron.
 
 ---
 
-### 6.3 Apartment Buildings
+### 7.2 Commercial Buildings
 
-Mid-rise residential blocks with a podium base and upper tower, featuring balconies, shopfronts, and optional rooftop amenities. Shares the Commercial (COMM) material palette.
+Office towers and retail complexes of varying heights and footprint shapes. Facades range from curtain wall glass to brick, marble, timber, and brutalist concrete. Entrances, roof treatments, and optional front fencing vary with each seed.
 
-**Grid:** 400 units/cell | **Ground Floor Height:** 430 units | **Upper Floor Height:** 340 units | **Floor Thickness:** 35 units | **Balcony Depth:** 140 units
-
-#### Key Options
-
-| Category | Options |
-|----------|---------|
-| **Massing Styles** | `Slab`, `Stepped`, `TwinBar`, `Courtyard`, `CornerTower`, `OffsetBar`, `UShape`, `SplitTower` |
-| **Balcony Styles** | `Continuous`, `Alternating`, `CornerWrap`, `BoxStacks` |
-| **Balcony Details** | `WroughtIron`, `GlassInset`, `ConcretePlanter`, `UtilityRack`, `ScreenWall` |
-| **Facade Styles** | `PaintedBands`, `BrickFrame`, `VerticalFins`, `ScreenWall`, `ColorBlock` |
-| **Shopfront Styles** | `RollerShutters`, `RecessedArcade`, `KioskMix`, `GlassShowroom`, `CornerAnchor` |
-| **Ground Floor Modes** | `FullRetail`, `SingleShop`, `MixedFrontage`, `ResidentialOnly` |
-| **Window Styles** | `Sliding`, `TallFrench`, `Ribbon`, `GrilledCasement` |
-| **Door Styles** | `SlidingGlass`, `SecurityGate`, `DoubleLeaf` |
-
-**Optional Details:** Roof pergola, laundry frames, service cores, front canopies, window ACs, planter boxes, rain pipes, sunshades, window grilles, tile inlays.
-
-**Default Layout:** 6 bays wide, 5 bays deep. Podium: 1 floor. Margins: 500 front, 450 back, 280 sides.
-
-**Material Slots:** Same 12 slots as Commercial buildings (see [Section 6.2](#62-commercial-buildings)).
+**Material slots:** 12 — covering glazing, frame, facade panel, spandrel, concrete, granite base, floor slab edge, metal accents, terrace, road, sidewalk, and timber cladding.
 
 ---
 
-### 6.4 Small Buildings (Retail / Kiosks)
+### 7.3 Apartment Buildings
 
-Low-rise retail and commercial buildings of 1–2 storeys, suited for street-level commercial frontage. Supports custom footprint polygons for irregular lot shapes.
+Mid-rise podium-and-tower residential blocks with street-facing shopfronts, balconies, and rooftop service details. A wide range of massing forms and facade treatments are supported.
 
-**Ground Floor Height:** 420 units | **Upper Floor Height:** 360 units | **Slab Thickness:** 28 units | **Parapet Height:** 65 units
-
-#### Configuration (`FSmallBuildingConfig`)
-
-| Property | Type | Default | Options / Notes |
-|----------|------|---------|-----------------|
-| `FootprintType` | `ESmallBuildingFootprintType` | — | `Rectangle`, `Trapezoid`, `Triangle`, `Chamfered`, `LShape` |
-| `Style` | `ESmallBuildingStyle` | `CornerShop` | `Kiosk`, `CornerShop`, `MiniMall`, `MarketStall`, `MixedRetail` |
-| `FacadeTheme` | `ESmallFacadeTheme` | `ModernBands` | `ModernBands`, `VerticalFrame`, `ArcadeFront`, `ScreenWall`, `CornerHighlight` |
-| `RoofProfile` | `ESmallRoofProfile` | `FlatParapet` | `FlatParapet`, `RaisedFront`, `FrontPortal`, `CornerTower` |
-| `WalkwayStyle` | `ESmallWalkwayStyle` | `OpenApron` | `OpenApron`, `CoveredVeranda`, `PillaredArcade`, `CornerShelter` |
-| `FrontageWidth` | `float` | `3200` | Building frontage width in Unreal units |
-| `BuildingDepth` | `float` | `2600` | Building depth |
-| `BackWidthScale` | `float` | `0.85` | Rear width as a fraction of frontage (for trapezoid lots) |
-| `CornerCut` | `float` | `450` | Corner chamfer size |
-| `SidewalkMargin` | `float` | `150` | Gap between building face and parcel edge |
-| `UpperInset` | `float` | `90` | Upper floor inset from ground floor face |
-| `CanopyDepth` | `float` | `95` | Front canopy projection depth |
-| `WalkwayWidth` | `float` | `110` | Covered walkway width |
-| `FacadeBayCount` | `int32` | `2` | Number of facade bays (columns of windows/openings) |
-| `bUseUpperSetback` | `bool` | `false` | Apply upper floor horizontal setback |
-| `bPreferCanopy` | `bool` | `true` | Generate front canopy/awning |
-| `bPreferRoofWaterTank` | `bool` | `true` | Add roof water tank detail |
-| `bPreferCornerEntry` | `bool` | `false` | Place main entrance at corner |
-| `bUseSecurityShutters` | `bool` | `true` | Add roller security shutters to openings |
-| `bUseBillboard` | `bool` | `false` | Add a rooftop billboard |
-| `bUsePilasters` | `bool` | `true` | Add pilaster columns on facade |
-| `bUseServiceCore` | `bool` | `false` | Add service/utility core at rear |
-| `bUseWraparoundWalkway` | `bool` | `true` | Wraparound walkway on front and sides |
-| `bUseCustomFootprint` | `bool` | `false` | Use `CustomFootprintLocal` polygon instead of preset shapes |
-| `GenerationSeed` | `int32` | `0` | Per-building seed |
-
-#### Material Slots (8)
-
-| Slot | Name | Used For |
-|------|------|----------|
-| 0 | `Glass` | Storefront glazing |
-| 1 | `Wall` | Main facade |
-| 2 | `Accent` | Trim and detail elements |
-| 3 | `Roof` | Parapet cap and roof surface |
-| 4 | `Metal` | Frames, poles, shutters |
-| 5 | `Ground` | Pavement and floor |
-| 6 | `Signage` | Storefront signage faces |
-| 7 | `Awning` | Canopy fabric |
+**Material slots:** 12 — same palette as Commercial buildings.
 
 ---
 
-### 6.5 Slum Buildings
+### 7.4 Small Buildings (Retail / Kiosks)
 
-Informal settlements with organic layouts and a variety of cheap construction materials (corrugated metal, plywood, cinderblock, mud). Individual rooms use different wall materials for a characteristically varied look.
+Low-rise retail and kiosk buildings of 1–2 storeys for street-level frontage. Footprints can be rectangular, chamfered, L-shaped, or tapered to fill irregular urban gaps. Front canopies, pilasters, covered walkways, and security shutters are all generated.
 
-**Grid:** 240 units/cell | **Wall Height:** 240 units | **Wall Thickness:** 12 units | **Max Grid:** 20 × 20 cells
-
-#### Configuration (`FSlumBuildingConfig`)
-
-| Property | Type | Default | Options / Notes |
-|----------|------|---------|-----------------|
-| `Margin` | `float` | `0.0` | Compound margin/setback from parcel boundary |
-| `bHasFence` | `bool` | `false` | Generate a perimeter fence |
-| `FenceType` | `ESlumFenceType` | `Metal` | `Metal`, `Pallet`, `Brick`, `Wire` |
-| `GenerationSeed` | `int32` | `0` | Per-building seed |
-
-#### Per-Room Wall Materials (`ESlumWallMaterial`)
-
-Each room is assigned one of:
-
-| Value | Material |
-|-------|----------|
-| `Metal` | Corrugated metal sheets |
-| `Wood` | Wooden planks and frames |
-| `Cinder` | Cinderblock masonry |
-| `Plywood` | Plywood wall panels |
-| `Painted` | Painted or rusted metal |
-| `Mud` | Mud/earth walls |
-
-Roof configuration per room: each room can have a `bFlatRoof` toggle or a tilted roof with `RoofTiltX` / `RoofTiltY` angles, producing varied roof heights and pitches across the compound.
-
-#### Material Slots (10)
-
-| Slot | Name | Used For |
-|------|------|----------|
-| 0 | `Metal` | Corrugated metal walls |
-| 1 | `Wood` | Wooden planks, frames, stilts |
-| 2 | `Cinder` | Cinderblock masonry |
-| 3 | `Plywood` | Plywood panels |
-| 4 | `Painted` | Painted or rusted metal surfaces |
-| 5 | `Mud` | Mud/earth walls and floors |
-| 6 | `Tarp` | Tarpaulin roof coverings |
-| 7 | `Window` | Emissive window interiors |
-| 8 | `Wire` | Wire fencing and dark metal |
-| 9 | `Props` | Barrels, bricks, and prop details |
+**Material slots:** 8 — covering glass, wall, accent, roof, metal, ground, signage, and awning.
 
 ---
 
-### 6.6 Parking Structures
+### 7.5 Slum Buildings
 
-Multi-storey parking garages — either fully enclosed or open-air — with configurable ramp placement, access control features, perimeter barriers, and lighting.
+Informal settlement compounds with organic layouts. Rooms use a mix of corrugated metal, wood, cinderblock, plywood, painted metal, and mud walls. Roofs vary in pitch and angle per room, giving the compound a characteristically uneven appearance. Optional perimeter fencing is supported.
 
-#### Standard Dimensions
-
-| Dimension | Value |
-|-----------|-------|
-| Bay Width | 300 units |
-| Bay Depth | 600 units |
-| Row Aisle Width | 1000 units |
-| Main Aisle Width | 1000 units |
-| Block Depth | 2200 units (2 × 600 + 1000) |
-| Floor Height | 400 units |
-| Slab Thickness | 40 units |
-| Column Size | 50 × 50 units |
-| Ramp Length | 2000 units |
-| Ramp Lane Width | 600 units |
-
-#### Configuration (`FParkingGeneratorConfig`)
-
-| Property | Type | Default | Options / Notes |
-|----------|------|---------|-----------------|
-| `Blocks` | `int32` | `3` | Number of parking unit blocks (rows of bays) |
-| `Cols` | `int32` | `12` | Number of parking columns per block |
-| `Floors` | `int32` | `3` | Number of storeys |
-| `LotType` | `EParkingLotType` | `Enclosed` | `Enclosed` (covered roof), `OpenAir` (surface/rooftop) |
-| `Shape` | `EParkingShape` | `Rectangle` | `Rectangle`, `LShape`, `UShape` |
-| `RampLoc` | `EParkingRampLoc` | `Center` | `Center`, `Corner`, `External` |
-| `Seed` | `int32` | `0` | Randomization seed |
-
-#### Fence Types (`EParkingFenceType`)
-
-`Wall`, `Brick`, `Bollards`, `Jersey` (concrete barriers), `Chainlink`, `Rail`
-
-#### Access Point Types (`EParkingAccessType`)
-
-`BoothClassic`, `SimpleBoom`, `GuardShack`, `LargeTollBooth`, `CanopySecurity`, `DualLaneGate`, `TicketKiosk`, `HeightRestrictor`, `RollerShutter`
-
-#### Material Slots (7)
-
-| Slot | Name | Used For |
-|------|------|----------|
-| 0 | `Asphalt` | Driving surface |
-| 1 | `Concrete` | Slabs, ramps, columns, walls |
-| 2 | `LineMarking` | Painted bay and aisle stripes |
-| 3 | `Steel` | Railings, boom gates |
-| 4 | `Glass` | Booth/enclosed facade panels |
-| 5 | `Brick` | Perimeter walls |
-| 6 | `Emissive` | Light fixtures and sign faces |
+**Material slots:** 10 — covering metal, wood, cinder, plywood, painted surfaces, mud, tarp, window glow, wire, and props.
 
 ---
 
-## 7. Street Generation (Standalone)
+### 7.6 Parking Structures
+
+Multi-storey parking garages, either fully enclosed or open-air. Footprints can be rectangular, L-shaped, or U-shaped. Ramps, access control booths, perimeter barriers, light poles, and support columns are all generated as part of the mesh.
+
+The dialog exposes layout controls (blocks, columns, floors), lot type, shape, and ramp placement. See [Section 5.8](#58-parking-lot-dialog) for the full dialog reference.
+
+**Material slots:** 7 — covering asphalt, concrete, line markings, steel, glass, brick, and emissive lighting.
+
+---
+
+## 8. Street Generation (Standalone)
 
 If you need only a street network — without full city generation — use `AStreetGeneratorActor`.
 
@@ -622,7 +604,7 @@ The generated `FStreetGraph` data structure (nodes + edges) is accessible from B
 
 ---
 
-## 8. Material System
+## 9. Material System
 
 ### How Material Pools Work
 
@@ -655,7 +637,7 @@ For full slot tables, see each building type's section above.
 
 ---
 
-## 9. Randomization & Seeds
+## 10. Randomization & Seeds
 
 All generators support deterministic seeded generation, allowing you to iterate on a city layout without losing specific results.
 
@@ -676,7 +658,7 @@ For the standalone street generator (`FStreetGeneratorParams`), set `Seed = INDE
 
 ---
 
-## 10. Tips & Known Limitations
+## 11. Tips & Known Limitations
 
 ### Terrain Features Are Disabled
 
